@@ -1,0 +1,15 @@
+[package]
+name = "codeasm"
+version = "0.1.0"
+authors = ["2975056410@qq.com"]
+description = "Generate code form ASTs."
+license = "MIT"
+repository = "https://github.com/ZJZCORE/codeasm"
+edition = "2024"
+
+[features]
+go = []
+py = []
+full = ["go", "py"]
+
+[dependencies]
