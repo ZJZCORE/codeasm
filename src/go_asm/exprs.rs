@@ -126,4 +126,4 @@ impl_binop!(BitOr, bitor, "|");
 impl_binop!(BitXor, bitxor, "^");
 impl_binop!(Shl, shl, "<<");
 impl_binop!(Shr, shr, ">>");
-impl_into!(i32, i64, i128, u32, u64, u128, f32, f64, bool);
+impl_into!(i32, i64, i128, u32, u64, u128, f32, f64, bool, Type);

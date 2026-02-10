@@ -1,10 +1,12 @@
 [package]
 name = "codeasm"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["2975056410@qq.com"]
 description = "Generate code form ASTs."
 license = "MIT"
 repository = "https://github.com/ZJZCORE/codeasm"
+keywords = ["parser", "ast", "codegen", "go", "py"]
+categories = ["development-tools"]
 edition = "2024"
 
 [features]

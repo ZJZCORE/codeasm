@@ -6,12 +6,15 @@ impl IfaceFn {
     pub fn new(
         name: impl Display,
         args: impl IntoIterator<Item = (impl Display, Type)>,
-        ret: Option<Type>,
+        rets: impl IntoIterator<Item = Type>,
     ) -> Self {
         let args =
             args.into_iter().map(|(arg, ty)| format!("{arg} {ty}")).collect::<Vec<_>>().join(", ");
-        let ret = ret.map_or(String::new(), |r| r.to_string());
-        Self(format!("{name}({args}) {ret}"))
+        let mut rets = rets.into_iter().map(|r| r.to_string()).collect::<Vec<_>>().join(", ");
+        if !rets.is_empty() {
+            rets = format!(" {rets}")
+        }
+        Self(format!("{name}({args}) {rets}"))
     }
 }
 
@@ -19,6 +22,10 @@ impl IfaceFn {
 pub struct Type(pub String);
 
 impl Type {
+    pub fn any() -> Self {
+        Self("any".into())
+    }
+
     pub fn bool() -> Self {
         Self("bool".into())
     }
@@ -69,7 +76,7 @@ impl Type {
         if members.is_empty() && embeds.is_empty() {
             Self("interface{}".into())
         } else {
-            Self(format!("interface {{\n{embeds}{members}}}"))
+            Self(format!("interface{{\n{embeds}{members}}}"))
         }
     }
 
@@ -82,7 +89,7 @@ impl Type {
         if members.is_empty() && embeds.is_empty() {
             Self("struct{}".into())
         } else {
-            Self(format!("struct {{\n{embeds}{members}}}"))
+            Self(format!("struct{{\n{embeds}{members}}}"))
         }
     }
 }

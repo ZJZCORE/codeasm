@@ -13,7 +13,7 @@ impl Decl {
     }
 
     pub fn variable(name: impl Display, val: Expr) -> Self {
-        Self(format!("{name} := {val}"))
+        Self(format!("var {name} = {val}"))
     }
 
     pub fn uninit_var(name: impl Display, ty: Type) -> Self {
@@ -33,13 +33,16 @@ impl Decl {
     pub fn func(
         name: impl Display,
         args: impl IntoIterator<Item = (impl Display, Type)>,
-        ret: Option<Type>,
+        rets: impl IntoIterator<Item = Type>,
         body: Block,
     ) -> Self {
         let args =
             args.into_iter().map(|(arg, ty)| format!("{arg} {ty}")).collect::<Vec<_>>().join(", ");
-        let ret = ret.as_ref().map_or(String::new(), |r| format!(" {r}"));
-        Self(format!("func {name}({args}){ret} {body}"))
+        let mut rets = rets.into_iter().map(|r| r.to_string()).collect::<Vec<_>>().join(", ");
+        if !rets.is_empty() {
+            rets = format!(" {rets}")
+        }
+        Self(format!("func {name}({args}){rets} {body}"))
     }
 
     /// e.g. `func (r Receiver) Function(arg1 int, ...) int { ... }`
@@ -47,14 +50,17 @@ impl Decl {
         name: impl Display,
         receiver: (impl Display, Type),
         args: impl IntoIterator<Item = (impl Display, Type)>,
-        ret: Option<Type>,
+        rets: impl IntoIterator<Item = Type>,
         body: Block,
     ) -> Self {
         let receiver = format!("{} {}", receiver.0, receiver.1);
         let args =
             args.into_iter().map(|(arg, ty)| format!("{arg} {ty}")).collect::<Vec<_>>().join(", ");
-        let ret = ret.as_ref().map_or(String::new(), |r| format!(" {r}"));
-        Self(format!("func ({receiver}) {name}({args}){ret} {body}"))
+        let mut rets = rets.into_iter().map(|r| r.to_string()).collect::<Vec<_>>().join(", ");
+        if !rets.is_empty() {
+            rets = format!(" {rets}")
+        }
+        Self(format!("func ({receiver}) {name}({args}){rets} {body}"))
     }
 }
 

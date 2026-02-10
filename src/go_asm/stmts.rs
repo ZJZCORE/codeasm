@@ -32,6 +32,21 @@ impl Stmt {
         Self(raw.to_string())
     }
 
+    /// break
+    pub fn brk() -> Self {
+        Self("break".into())
+    }
+
+    /// continue
+    pub fn cont() -> Self {
+        Self("continue".into())
+    }
+
+    /// fallthrough
+    pub fn fall() -> Self {
+        Self("fallthrough".into())
+    }
+
     pub fn ret(vals: impl IntoIterator<Item = Expr>) -> Self {
         let vals = vals.into_iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
         Self(format!("return {vals}"))
@@ -111,6 +126,12 @@ impl Stmt {
             (false, false, false) => Self(format!("for {body}")),
             _ => panic!("invalid for loop"),
         }
+    }
+}
+
+impl Into<Stmt> for Expr {
+    fn into(self) -> Stmt {
+        Stmt::raw(self)
     }
 }
 
