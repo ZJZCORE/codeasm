@@ -31,10 +31,6 @@ impl Expr {
         Self(format!("range {self}"))
     }
 
-    pub fn uop(self, op: &str) -> Self {
-        Self(format!("{op}{self}"))
-    }
-
     pub fn binop(self, op: &str, rhs: Expr) -> Self {
         Self(format!("({self} {op} {rhs})"))
     }
@@ -59,6 +55,20 @@ impl Expr {
         Self(format!("{ty}{{{vals}}}"))
     }
 
+    /// Create a closure. e.g. `func(){}`
+    pub fn closure(
+        args: impl IntoIterator<Item = Type>,
+        rets: impl IntoIterator<Item = Type>,
+        body: Block,
+    ) -> Self {
+        let args = args.into_iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(", ");
+        let mut rets = rets.into_iter().map(|r| r.to_string()).collect::<Vec<_>>().join(", ");
+        if !rets.is_empty() {
+            rets = format!(" {rets}")
+        }
+        Self(format!("func({args}){rets} {body}"))
+    }
+
     /// Create a function call expr.
     pub fn call(self, args: impl IntoIterator<Item = Expr>) -> Self {
         let args: Vec<_> = args.into_iter().map(|e| e.to_string()).collect();
@@ -69,13 +79,13 @@ impl Expr {
 impl Neg for Expr {
     type Output = Self;
     fn neg(self) -> Self::Output {
-        self.uop("-")
+        Self(format!("-{self}"))
     }
 }
 impl Not for Expr {
     type Output = Self;
     fn not(self) -> Self::Output {
-        self.uop("!")
+        Self(format!("!{self}"))
     }
 }
 impl Into<Expr> for String {
@@ -94,36 +104,16 @@ impl Display for Expr {
     }
 }
 
-macro_rules! impl_binop {
-    ($trait:ident, $method:ident, $op:expr) => {
-        impl $trait for Expr {
-            type Output = Self;
-            fn $method(self, rhs: Self) -> Self::Output {
-                self.binop($op, rhs)
-            }
-        }
-    };
-}
-macro_rules! impl_into {
-    ($($t:ty),*) => {
-        $(
-            impl Into<Expr> for $t {
-                fn into(self) -> Expr {
-                    Expr::raw(self)
-                }
-            }
-        )*
-    };
-}
-
-impl_binop!(Add, add, "+");
-impl_binop!(Sub, sub, "-");
-impl_binop!(Mul, mul, "*");
-impl_binop!(Div, div, "/");
-impl_binop!(Rem, rem, "%");
-impl_binop!(BitAnd, bitand, "&");
-impl_binop!(BitOr, bitor, "|");
-impl_binop!(BitXor, bitxor, "^");
-impl_binop!(Shl, shl, "<<");
-impl_binop!(Shr, shr, ">>");
+macro_rules! impl_binop { ($($t:ident, $f:ident, $op:expr),*) => {$(
+    impl $t for Expr {
+        type Output = Self;
+        fn $f(self, rhs: Self) -> Self::Output { self.binop($op, rhs) }
+    }
+)*}}
+macro_rules! impl_into { ($($t:ty),*) => {$(
+    impl Into<Expr> for $t { fn into(self) -> Expr { Expr::raw(self) } }
+)*}}
+impl_binop!(Add, add, "+", Sub, sub, "-", Mul, mul, "*", Div, div, "/");
+impl_binop!(Rem, rem, "%", BitAnd, bitand, "&", BitOr, bitor, "|");
+impl_binop!(BitXor, bitxor, "^", Shl, shl, "<<", Shr, shr, ">>");
 impl_into!(i32, i64, i128, u32, u64, u128, f32, f64, bool, Type);

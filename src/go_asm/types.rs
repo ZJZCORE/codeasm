@@ -22,6 +22,10 @@ impl IfaceFn {
 pub struct Type(pub String);
 
 impl Type {
+    pub fn raw(raw: impl ToString) -> Self {
+        Self(raw.to_string())
+    }
+
     pub fn any() -> Self {
         Self("any".into())
     }
@@ -42,12 +46,8 @@ impl Type {
         Self(format!("uint{bit}"))
     }
 
-    pub fn map(k: Self, v: Self) -> Self {
-        Self(format!("map[{k}]{v}"))
-    }
-
-    pub fn custom(s: impl ToString) -> Self {
-        Self(s.to_string())
+    pub fn map(self, v: Self) -> Self {
+        Self(format!("map[{self}]{v}"))
     }
 
     pub fn chan(self) -> Self {
@@ -67,16 +67,20 @@ impl Type {
         Self(format!("[{size}]{self}"))
     }
 
+    pub fn slice(self) -> Self {
+        Self(format!("[]{self}"))
+    }
+
     pub fn interface(
         embeds: impl IntoIterator<Item = impl Display>,
         methods: impl IntoIterator<Item = IfaceFn>,
     ) -> Self {
-        let embeds: String = embeds.into_iter().map(|e| format!("{}\n", e)).collect();
+        let embeds: String = embeds.into_iter().map(|e| format!("{e}\n")).collect();
         let members: String = methods.into_iter().map(|m| format!("{}\n", m.0)).collect();
         if members.is_empty() && embeds.is_empty() {
             Self("interface{}".into())
         } else {
-            Self(format!("interface{{\n{embeds}{members}}}"))
+            Self(format!("interface {{\n{embeds}{members}}}"))
         }
     }
 
@@ -84,13 +88,18 @@ impl Type {
         embeds: impl IntoIterator<Item = impl Display>,
         fields: impl IntoIterator<Item = (impl Display, Type)>,
     ) -> Self {
-        let embeds: String = embeds.into_iter().map(|e| format!("{}\n", e)).collect();
+        let embeds: String = embeds.into_iter().map(|e| format!("{e}\n")).collect();
         let members: String = fields.into_iter().map(|f| format!("{} {}\n", f.0, f.1)).collect();
         if members.is_empty() && embeds.is_empty() {
             Self("struct{}".into())
         } else {
-            Self(format!("struct{{\n{embeds}{members}}}"))
+            Self(format!("struct {{\n{embeds}{members}}}"))
         }
+    }
+
+    /// Add a name.
+    pub fn bind(self, name: impl Display) -> Self {
+        Self(format!("{name} {self}"))
     }
 }
 

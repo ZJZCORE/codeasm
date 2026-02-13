@@ -1,31 +1,32 @@
 use super::*;
 
-#[derive(Clone)]
-pub struct Block(pub Vec<Stmt>);
+#[derive(Clone, Default)]
+pub struct Block(pub String);
 
 impl Block {
     pub fn new() -> Self {
-        Self(Vec::new())
+        Self::default()
     }
 
-    pub fn push(&mut self, stmt: Stmt) -> &mut Self {
-        self.0.push(stmt);
+    pub fn push(self, stmt: Stmt) -> Self {
+        Self(format!("{}    {stmt}\n", self.0))
+    }
+
+    /// push stmt to `&mut Block`
+    pub fn pushs(&mut self, stmt: Stmt) -> &mut Self {
+        writeln!(self.0, "{stmt}").unwrap();
         self
-    }
-
-    pub fn fmt_no_brace(&self, f: &mut impl Write) -> std::fmt::Result {
-        write!(f, "{}", self.0.iter().map(|s| format!("    {s}\n")).collect::<String>())
     }
 }
 
 impl Display for Block {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{\n{}}}", self.0.iter().map(|s| format!("    {s}\n")).collect::<String>())
+        write!(f, "{{\n{}}}", self.0)
     }
 }
 
 #[derive(Clone)]
-pub struct Stmt(String);
+pub struct Stmt(pub String);
 
 impl Stmt {
     pub fn raw(raw: impl ToString) -> Self {
@@ -45,6 +46,10 @@ impl Stmt {
     /// fallthrough
     pub fn fall() -> Self {
         Self("fallthrough".into())
+    }
+
+    pub fn defer(call: Expr) -> Self {
+        Self(format!("defer {call}"))
     }
 
     pub fn ret(vals: impl IntoIterator<Item = Expr>) -> Self {
@@ -80,7 +85,7 @@ impl Stmt {
         ))
     }
 
-    pub fn if_(cases: impl IntoIterator<Item = (Expr, Block)>, else_: Option<Block>) -> Self {
+    pub fn if_(cases: impl IntoIterator<Item = (Expr, Block)>, else_: Block) -> Self {
         let mut res = String::new();
         let mut cases = cases.into_iter();
         let (cond, block) = cases.next().expect("`cases` is empty");
@@ -88,7 +93,7 @@ impl Stmt {
         for (cond, block) in cases {
             write!(res, " else if {cond} {block}").unwrap();
         }
-        if let Some(else_) = else_ {
+        if !else_.0.is_empty() {
             write!(res, " else {else_}").unwrap();
         }
         Self(res)
@@ -97,16 +102,14 @@ impl Stmt {
     pub fn switch(
         val: Expr,
         cases: impl IntoIterator<Item = (Expr, Block)>,
-        default: Option<Block>,
+        default: Block,
     ) -> Self {
         let mut res = format!("switch {val} {{");
         for (v, block) in cases {
-            writeln!(res, "case {v}:").unwrap();
-            block.fmt_no_brace(&mut res).unwrap();
+            write!(res, "case {v}:\n{}", block.0).unwrap();
         }
-        if let Some(default) = default {
-            writeln!(res, "default:").unwrap();
-            default.fmt_no_brace(&mut res).unwrap();
+        if !default.0.is_empty() {
+            write!(res, "default:\n{}", default.0).unwrap();
         }
         Self(format!("{res}}}"))
     }

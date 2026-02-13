@@ -1,6 +1,6 @@
 [package]
 name = "codeasm"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["2975056410@qq.com"]
 description = "Generate code form ASTs."
 license = "MIT"
